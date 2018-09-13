@@ -229,21 +229,13 @@ class StackOverflow extends Serializable {
                             vectors: RDD[(Int, Int)],
                             iter: Int = 1,
                             debug: Boolean = false): Array[(Int, Int)] = {
-    val newMeans = means.clone() // you need to compute newMeans
-
-    // TODO: Fill in the newMeans array
 
     val groupByClosest: Map[Int, Iterable[(HighScore, HighScore)]] =
       vectors.groupBy(p => findClosest(p, means)).collect.toMap
 
-    for {
-      (mean, index) <- means.zipWithIndex
-    } {
-      if (groupByClosest.contains(index)) {
-        newMeans(index) = averageVectors(groupByClosest(index))
-      } else {
-        newMeans(index) = mean
-      }
+    val newMeans = means.zipWithIndex.map {
+      case (_, index) if groupByClosest.contains(index) => averageVectors(groupByClosest(index))
+      case (mean, _)                                    => mean
     }
 
     val distance = euclideanDistance(means, newMeans)
